@@ -1,0 +1,11 @@
+# IDE 配置
+.idea/
+.cursor/
+.vscode/
+
+# 临时文件
+tmp/
+
+# Docker Compose 本地覆盖
+docker-compose.override.yml
+compose.override.yml

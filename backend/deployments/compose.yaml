@@ -1,0 +1,21 @@
+name: mygo-backend
+
+services:
+  go-app:
+    build:
+      context: ../
+      dockerfile: deployments/Dockerfile
+    environment:
+      PORT: 8081
+      # 后续连接 Redis 和 PG 需要用到的变量
+      DATABASE_URL: ${DATABASE_URL:-postgres://mygo:avemujica@db:5432/app?sslmode=disable}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+    networks:
+      - mygo-network
+
+networks:
+  mygo-network:
+    external: true
