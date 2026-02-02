@@ -27,7 +27,10 @@ var migrateModels = []any{
 	&knowledgePersistence.VersionPO{},
 	&knowledgePersistence.ChunkPO{},
 	&knowledgePersistence.EdgePO{},
-	&knowledgePersistence.EmbeddingPO{},
+	// &knowledgePersistence.EmbeddingPO{}, // TODO: 需要先安装 pgvector 扩展
+	&knowledgePersistence.AITaskPO{},
+	&knowledgePersistence.TagPO{},
+	&knowledgePersistence.KnowledgeNodeTagPO{},
 }
 
 // errDryRunRollback 用于 dry-run 模式触发回滚

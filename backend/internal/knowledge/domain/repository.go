@@ -51,3 +51,39 @@ type EdgeRepository interface {
 	ListByFromNode(ctx context.Context, fromNodeID KnowledgeID) ([]*Edge, error)
 	ListByToNode(ctx context.Context, toNodeID KnowledgeID) ([]*Edge, error)
 }
+
+// ==================== AITaskRepository ====================
+
+// AITaskRepository AI 任务的仓储接口（基础设施层实现）
+type AITaskRepository interface {
+	Create(ctx context.Context, task *AITask) error
+	GetByID(ctx context.Context, id AITaskID) (*AITask, error)
+	Update(ctx context.Context, task *AITask) error
+	ListByNode(ctx context.Context, nodeID KnowledgeID) ([]*AITask, error)
+	ListByStatus(ctx context.Context, status AITaskStatus) ([]*AITask, error)
+	ListPending(ctx context.Context, limit int) ([]*AITask, error)
+}
+
+// ==================== TagRepository ====================
+
+// TagRepository 标签的仓储接口（基础设施层实现）
+type TagRepository interface {
+	Create(ctx context.Context, tag *Tag) error
+	GetByID(ctx context.Context, id TagID) (*Tag, error)
+	GetByName(ctx context.Context, name string) (*Tag, error)
+	Delete(ctx context.Context, id TagID) error
+	List(ctx context.Context) ([]*Tag, error)
+	// GetOrCreate 获取或创建标签（幂等操作）
+	GetOrCreate(ctx context.Context, name string) (*Tag, error)
+}
+
+// ==================== KnowledgeNodeTagRepository ====================
+
+// KnowledgeNodeTagRepository 节点标签关联的仓储接口（基础设施层实现）
+type KnowledgeNodeTagRepository interface {
+	Create(ctx context.Context, nodeTag *KnowledgeNodeTag) error
+	Delete(ctx context.Context, nodeID KnowledgeID, tagID TagID) error
+	ListTagsByNode(ctx context.Context, nodeID KnowledgeID) ([]*Tag, error)
+	ListNodesByTag(ctx context.Context, tagID TagID) ([]KnowledgeID, error)
+	SetNodeTags(ctx context.Context, nodeID KnowledgeID, tagIDs []TagID) error
+}

@@ -2,7 +2,17 @@
 
 ## 项目概述
 
-这是一个前后端分离的全栈项目 (Monorepo)。
+这是一个 **AI-Native 个人知识库系统**。
+核心目标是构建以 **Knowledge** 为中心，支持 Markdown 编辑、多版本演进、AI 处理（Chunk / Embedding / RAG）的长期可演进系统。
+
+### 核心设计共识
+
+- **Database as Source of Truth**: 数据库是知识事实源，Markdown 完整内容存于 DB，文件系统中的 `.md` 仅是可重建的投影。
+- **Knowledge Node**: 顶层抽象，支持版本管理、知识图谱（Graph）和 AI 推理。
+- **三层模型**:
+  - DB：事实层（版本、关系、Chunk、Embedding）
+  - FS：投影层（人类可读 Markdown）
+  - AI：推理层（RAG / Agent，全异步可重建）
 
 ## 技术架构与关键目录
 
