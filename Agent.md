@@ -11,10 +11,15 @@
 - **Knowledge Node**: 顶层抽象，支持版本管理、知识图谱（Graph）和 AI 推理。
 - **三层模型**:
   - DB：事实层（版本、关系、Chunk、Embedding）
-  - FS：投影层（人类可读 Markdown）
+  - FS：投影层（人类可读 Markdown，存储于 `/workspace/data/knowledge`）
   - AI：推理层（RAG / Agent，全异步可重建）
 
 ## 技术架构与关键目录
+
+### 数据存储 (Data Storage)
+
+- **路径**: `/workspace/data/knowledge`
+- **用途**: 存储 Markdown 文件及其他数据文件的持久化目录（作为 DB 的文件系统投影）。
 
 ### 后端服务 (`backend/`)
 

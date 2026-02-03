@@ -8,7 +8,8 @@ import (
 
 // NodePO 是 knowledge_nodes 的数据库存储模型（Persistence Object）
 type NodePO struct {
-	ID             string    `gorm:"column:id;type:uuid;primaryKey"`
+	ID             int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	NodeID         string    `gorm:"column:node_id;type:uuid;not null;uniqueIndex"`
 	NodeType       string    `gorm:"column:node_type;type:varchar(32);not null;index:idx_knowledge_nodes_type"`
 	Title          string    `gorm:"column:title;type:text;not null"`
 	Summary        string    `gorm:"column:summary;type:text"`
@@ -28,6 +29,7 @@ func NodePOFromDomain(e *domain.Node) *NodePO {
 	}
 	return &NodePO{
 		ID:             e.ID,
+		NodeID:         e.NodeID,
 		NodeType:       string(e.NodeType),
 		Title:          e.Title,
 		Summary:        e.Summary,
@@ -46,6 +48,7 @@ func (p *NodePO) ToDomain() *domain.Node {
 	}
 	return &domain.Node{
 		ID:             p.ID,
+		NodeID:         p.NodeID,
 		NodeType:       domain.NodeType(p.NodeType),
 		Title:          p.Title,
 		Summary:        p.Summary,

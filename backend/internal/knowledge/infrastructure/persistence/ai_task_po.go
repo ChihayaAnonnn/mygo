@@ -8,7 +8,8 @@ import (
 
 // AITaskPO 是 ai_tasks 的数据库存储模型（Persistence Object）
 type AITaskPO struct {
-	ID        string    `gorm:"column:id;type:uuid;primaryKey"`
+	ID        int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	TaskID    string    `gorm:"column:task_id;type:uuid;not null;uniqueIndex"`
 	NodeID    string    `gorm:"column:node_id;type:uuid;index:idx_ai_tasks_node"`
 	Version   *int      `gorm:"column:version;type:int"`
 	TaskType  string    `gorm:"column:task_type;type:varchar(32);not null;index:idx_ai_tasks_type"`
@@ -25,7 +26,8 @@ func AITaskPOFromDomain(e *domain.AITask) *AITaskPO {
 		return nil
 	}
 	return &AITaskPO{
-		ID:        string(e.ID),
+		ID:        e.ID,
+		TaskID:    string(e.TaskID),
 		NodeID:    string(e.NodeID),
 		Version:   e.Version,
 		TaskType:  string(e.TaskType),
@@ -41,7 +43,8 @@ func (p *AITaskPO) ToDomain() *domain.AITask {
 		return nil
 	}
 	return &domain.AITask{
-		ID:        domain.AITaskID(p.ID),
+		ID:        p.ID,
+		TaskID:    domain.AITaskID(p.TaskID),
 		NodeID:    domain.KnowledgeID(p.NodeID),
 		Version:   p.Version,
 		TaskType:  domain.AITaskType(p.TaskType),

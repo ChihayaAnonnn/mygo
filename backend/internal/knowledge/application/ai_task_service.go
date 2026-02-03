@@ -49,7 +49,8 @@ func NewAITaskService(repo domain.AITaskRepository) AITaskService {
 // CreateTask 创建新任务
 func (s *aiTaskServiceImpl) CreateTask(ctx context.Context, nodeID domain.KnowledgeID, version *int, taskType domain.AITaskType) (*domain.AITask, error) {
 	task := &domain.AITask{
-		ID:        domain.AITaskID(uuid.New().String()),
+		// ID 由数据库自增生成
+		TaskID:    domain.AITaskID(uuid.New().String()), // 业务 UUID
 		NodeID:    nodeID,
 		Version:   version,
 		TaskType:  taskType,

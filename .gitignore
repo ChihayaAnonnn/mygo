@@ -9,3 +9,6 @@ tmp/
 # Docker Compose 本地覆盖
 docker-compose.override.yml
 compose.override.yml
+
+# air
+.air.toml

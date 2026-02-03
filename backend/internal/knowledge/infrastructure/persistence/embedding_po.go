@@ -11,7 +11,8 @@ import (
 // EmbeddingPO 是 knowledge_embeddings 的数据库存储模型（Persistence Object）
 // 注意：使用 pgvector 扩展存储向量数据
 type EmbeddingPO struct {
-	ChunkID   string          `gorm:"column:chunk_id;type:uuid;primaryKey"`
+	ID        int64           `gorm:"column:id;primaryKey;autoIncrement"`
+	ChunkID   string          `gorm:"column:chunk_id;type:uuid;not null;uniqueIndex"`
 	Embedding pgvector.Vector `gorm:"column:embedding;type:vector(1536);not null"`
 	Model     string          `gorm:"column:model;type:varchar(64);not null"`
 	CreatedAt time.Time       `gorm:"column:created_at;autoCreateTime"`
@@ -25,6 +26,7 @@ func EmbeddingPOFromDomain(e *domain.Embedding) *EmbeddingPO {
 		return nil
 	}
 	return &EmbeddingPO{
+		ID:        e.ID,
 		ChunkID:   e.ChunkID,
 		Embedding: pgvector.NewVector(e.Embedding),
 		Model:     e.Model,
@@ -38,6 +40,7 @@ func (p *EmbeddingPO) ToDomain() *domain.Embedding {
 		return nil
 	}
 	return &domain.Embedding{
+		ID:        p.ID,
 		ChunkID:   p.ChunkID,
 		Embedding: p.Embedding.Slice(),
 		Model:     p.Model,

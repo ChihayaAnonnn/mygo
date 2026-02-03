@@ -312,7 +312,7 @@ func knowledgeToResponse(node *domain.Node) *KnowledgeResponse {
 		return nil
 	}
 	return &KnowledgeResponse{
-		ID:             node.ID,
+		ID:             node.NodeID, // 对外暴露业务 UUID
 		NodeType:       string(node.NodeType),
 		Title:          node.Title,
 		Summary:        node.Summary,
@@ -329,7 +329,7 @@ func versionToResponse(version *domain.Version) *VersionResponse {
 		return nil
 	}
 	return &VersionResponse{
-		ID:        version.ID,
+		ID:        version.VersionID, // 对外暴露业务 UUID
 		NodeID:    version.NodeID,
 		Version:   version.Version,
 		ContentMd: version.ContentMd,
@@ -342,7 +342,7 @@ func chunkToResponse(chunk *domain.Chunk) *ChunkResponse {
 		return nil
 	}
 	return &ChunkResponse{
-		ID:          chunk.ID,
+		ID:          chunk.ChunkID, // 对外暴露业务 UUID
 		NodeID:      chunk.NodeID,
 		Version:     chunk.Version,
 		HeadingPath: chunk.HeadingPath,

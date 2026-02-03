@@ -8,7 +8,8 @@ import (
 
 // ChunkPO 是 knowledge_chunks 的数据库存储模型（Persistence Object）
 type ChunkPO struct {
-	ID          string    `gorm:"column:id;type:uuid;primaryKey"`
+	ID          int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	ChunkID     string    `gorm:"column:chunk_id;type:uuid;not null;uniqueIndex"`
 	NodeID      string    `gorm:"column:node_id;type:uuid;not null;index:idx_knowledge_chunks_node"`
 	Version     int       `gorm:"column:version;not null;index:idx_knowledge_chunks_version,priority:2"`
 	HeadingPath string    `gorm:"column:heading_path;type:text"`
@@ -27,6 +28,7 @@ func ChunkPOFromDomain(e *domain.Chunk) *ChunkPO {
 	}
 	return &ChunkPO{
 		ID:          e.ID,
+		ChunkID:     e.ChunkID,
 		NodeID:      e.NodeID,
 		Version:     e.Version,
 		HeadingPath: e.HeadingPath,
@@ -44,6 +46,7 @@ func (p *ChunkPO) ToDomain() *domain.Chunk {
 	}
 	return &domain.Chunk{
 		ID:          p.ID,
+		ChunkID:     p.ChunkID,
 		NodeID:      p.NodeID,
 		Version:     p.Version,
 		HeadingPath: p.HeadingPath,

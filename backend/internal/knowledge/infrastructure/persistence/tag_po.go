@@ -6,8 +6,9 @@ import (
 
 // TagPO 是 tags 的数据库存储模型（Persistence Object）
 type TagPO struct {
-	ID   string `gorm:"column:id;type:uuid;primaryKey"`
-	Name string `gorm:"column:name;type:varchar(64);not null;uniqueIndex"`
+	ID    int64  `gorm:"column:id;primaryKey;autoIncrement"`
+	TagID string `gorm:"column:tag_id;type:uuid;not null;uniqueIndex"`
+	Name  string `gorm:"column:name;type:varchar(64);not null;uniqueIndex"`
 }
 
 func (TagPO) TableName() string { return "tags" }
@@ -18,8 +19,9 @@ func TagPOFromDomain(e *domain.Tag) *TagPO {
 		return nil
 	}
 	return &TagPO{
-		ID:   string(e.ID),
-		Name: e.Name,
+		ID:    e.ID,
+		TagID: string(e.TagID),
+		Name:  e.Name,
 	}
 }
 
@@ -29,8 +31,9 @@ func (p *TagPO) ToDomain() *domain.Tag {
 		return nil
 	}
 	return &domain.Tag{
-		ID:   domain.TagID(p.ID),
-		Name: p.Name,
+		ID:    p.ID,
+		TagID: domain.TagID(p.TagID),
+		Name:  p.Name,
 	}
 }
 

@@ -15,8 +15,9 @@ type TagID string
 
 // Tag 弱语义分类标签
 type Tag struct {
-	ID   TagID  // 标签唯一标识（UUID）
-	Name string // 标签名称（唯一）
+	ID    int64  // 数据库自增主键（内部使用）
+	TagID TagID  // 标签唯一标识（UUID，对外暴露）
+	Name  string // 标签名称（唯一）
 }
 
 // ==================== KnowledgeNodeTag 关联 ====================

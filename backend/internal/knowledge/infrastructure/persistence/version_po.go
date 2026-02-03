@@ -8,7 +8,8 @@ import (
 
 // VersionPO 是 knowledge_versions 的数据库存储模型（Persistence Object）
 type VersionPO struct {
-	ID        string    `gorm:"column:id;type:uuid;primaryKey"`
+	ID        int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	VersionID string    `gorm:"column:version_id;type:uuid;not null;uniqueIndex"`
 	NodeID    string    `gorm:"column:node_id;type:uuid;not null;index:idx_knowledge_versions_node"`
 	Version   int       `gorm:"column:version;not null"`
 	ContentMd string    `gorm:"column:content_md;type:text;not null"`
@@ -24,6 +25,7 @@ func VersionPOFromDomain(e *domain.Version) *VersionPO {
 	}
 	return &VersionPO{
 		ID:        e.ID,
+		VersionID: e.VersionID,
 		NodeID:    e.NodeID,
 		Version:   e.Version,
 		ContentMd: e.ContentMd,
@@ -38,6 +40,7 @@ func (p *VersionPO) ToDomain() *domain.Version {
 	}
 	return &domain.Version{
 		ID:        p.ID,
+		VersionID: p.VersionID,
 		NodeID:    p.NodeID,
 		Version:   p.Version,
 		ContentMd: p.ContentMd,

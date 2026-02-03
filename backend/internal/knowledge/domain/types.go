@@ -2,15 +2,17 @@ package domain
 
 import "errors"
 
-// ==================== 领域 ID 类型 ====================
+// ==================== 领域 ID 类型（业务 UUID） ====================
+// 这些 ID 类型代表对外暴露的业务标识（UUID），用于 API 和跨系统引用
+// 数据库内部使用自增 int64 作为主键，提升索引性能
 
-// KnowledgeID 知识实体的唯一标识
+// KnowledgeID 知识节点的业务唯一标识（UUID）
 type KnowledgeID string
 
-// VersionID 版本记录的唯一标识
+// VersionID 版本记录的业务唯一标识（UUID）
 type VersionID string
 
-// ChunkID 分块的唯一标识
+// ChunkID 分块的业务唯一标识（UUID）
 type ChunkID string
 
 // FilePath 文件路径

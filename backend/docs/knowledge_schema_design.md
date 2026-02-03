@@ -28,6 +28,22 @@
 * **文件系统**：编辑友好型源文件、恢复与工具支持
 * **Redis（可选）**：缓存、异步任务加速
 
+### 2.3 主键设计（自增 ID + 业务 UUID）
+
+所有核心表均采用 **双 ID 设计**：
+
+| ID 类型 | 字段名 | 用途 |
+|--------|-------|------|
+| 自增主键 | `id` (BIGSERIAL) | 数据库内部主键，聚簇索引，JOIN 性能优化 |
+| 业务 UUID | `node_id` / `version_id` 等 | 对外暴露的唯一标识，API 参数，跨系统引用 |
+
+**设计优势**：
+
+* **性能更好**：整型主键作为聚簇索引，B+ 树更紧凑
+* **安全性**：避免暴露自增 ID 导致的信息泄露（可猜测数量）
+* **一致性**：与 User 模块保持统一设计风格
+* **灵活性**：UUID 可用于分布式场景，自增 ID 保证本地性能
+
 ---
 
 ## 3. 数据模型总览
@@ -60,7 +76,8 @@
 
 | 字段              | 类型          | 说明                                             |
 | --------------- | ----------- | ---------------------------------------------- |
-| id              | UUID        | 知识节点的全局唯一标识，是所有关联的锚点                           |
+| id              | BIGSERIAL   | 数据库自增主键（内部使用）                                  |
+| node_id         | UUID        | 知识节点的业务唯一标识（对外暴露）                              |
 | node_type       | VARCHAR(32) | 节点类型，用于区分知识形态（blog / note / paper / concept 等） |
 | title           | TEXT        | 面向人类的知识标题，允许自由修改                               |
 | summary         | TEXT        | 短摘要，可由 AI 自动生成或人工维护                            |
@@ -83,7 +100,8 @@
 
 ```sql
 CREATE TABLE knowledge_nodes (
-    id UUID PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
+    node_id UUID NOT NULL UNIQUE,
     node_type VARCHAR(32) NOT NULL,
     title TEXT NOT NULL,
     summary TEXT,
@@ -110,8 +128,9 @@ CREATE INDEX idx_knowledge_nodes_status ON knowledge_nodes(status);
 
 | 字段         | 类型        | 说明                   |
 | ---------- | --------- | -------------------- |
-| id         | UUID      | 版本记录唯一标识             |
-| node_id    | UUID      | 所属知识节点 ID            |
+| id         | BIGSERIAL | 数据库自增主键（内部使用）        |
+| version_id | UUID      | 版本记录业务唯一标识（对外暴露）     |
+| node_id    | UUID      | 所属知识节点业务 UUID         |
 | version    | INT       | 版本号，从 1 开始单调递增       |
 | content_md | TEXT      | 完整 Markdown 内容（权威文本） |
 | created_at | TIMESTAMP | 该版本生成时间              |
@@ -120,8 +139,9 @@ CREATE INDEX idx_knowledge_nodes_status ON knowledge_nodes(status);
 
 ```sql
 CREATE TABLE knowledge_versions (
-    id UUID PRIMARY KEY,
-    node_id UUID NOT NULL REFERENCES knowledge_nodes(id) ON DELETE CASCADE,
+    id BIGSERIAL PRIMARY KEY,
+    version_id UUID NOT NULL UNIQUE,
+    node_id UUID NOT NULL,
     version INT NOT NULL,
     content_md TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -143,8 +163,9 @@ CREATE INDEX idx_knowledge_versions_node ON knowledge_versions(node_id);
 
 | 字段           | 类型        | 说明                         |
 | ------------ | --------- | -------------------------- |
-| id           | UUID      | Chunk 唯一标识                 |
-| node_id      | UUID      | 所属知识节点                     |
+| id           | BIGSERIAL | 数据库自增主键（内部使用）              |
+| chunk_id     | UUID      | Chunk 业务唯一标识（对外暴露）         |
+| node_id      | UUID      | 所属知识节点业务 UUID               |
 | version      | INT       | 来源的 Markdown 版本号           |
 | heading_path | TEXT      | 该 Chunk 所属的标题层级路径（如 H1/H2） |
 | content      | TEXT      | Chunk 的纯文本内容               |
@@ -156,8 +177,9 @@ CREATE INDEX idx_knowledge_versions_node ON knowledge_versions(node_id);
 
 ```sql
 CREATE TABLE knowledge_chunks (
-    id UUID PRIMARY KEY,
-    node_id UUID NOT NULL REFERENCES knowledge_nodes(id) ON DELETE CASCADE,
+    id BIGSERIAL PRIMARY KEY,
+    chunk_id UUID NOT NULL UNIQUE,
+    node_id UUID NOT NULL,
     version INT NOT NULL,
     heading_path TEXT,
     content TEXT NOT NULL,
@@ -180,12 +202,13 @@ CREATE INDEX idx_knowledge_chunks_version ON knowledge_chunks(node_id, version);
 
 **字段说明**：
 
-| 字段         | 类型          | 说明                |
-| ---------- | ----------- | ----------------- |
-| chunk_id   | UUID        | 对应的 Chunk ID（一对一） |
-| embedding  | VECTOR      | 语义向量（维度与模型绑定）     |
-| model      | VARCHAR(64) | 生成该向量的模型名称        |
-| created_at | TIMESTAMP   | 向量生成时间            |
+| 字段         | 类型          | 说明                      |
+| ---------- | ----------- | ----------------------- |
+| id         | BIGSERIAL   | 数据库自增主键（内部使用）           |
+| chunk_id   | UUID        | 对应的 Chunk UUID（一对一，唯一约束） |
+| embedding  | VECTOR      | 语义向量（维度与模型绑定）           |
+| model      | VARCHAR(64) | 生成该向量的模型名称              |
+| created_at | TIMESTAMP   | 向量生成时间                  |
 
 **DDL**：
 
@@ -193,7 +216,8 @@ CREATE INDEX idx_knowledge_chunks_version ON knowledge_chunks(node_id, version);
 CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE knowledge_embeddings (
-    chunk_id UUID PRIMARY KEY REFERENCES knowledge_chunks(id) ON DELETE CASCADE,
+    id BIGSERIAL PRIMARY KEY,
+    chunk_id UUID NOT NULL UNIQUE,
     embedding VECTOR(1536) NOT NULL,
     model VARCHAR(64) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
@@ -216,9 +240,10 @@ USING ivfflat (embedding vector_cosine_ops);
 
 | 字段         | 类型          | 说明                                         |
 | ---------- | ----------- | ------------------------------------------ |
-| id         | UUID        | 边的唯一标识                                     |
-| from_node  | UUID        | 起始知识节点                                     |
-| to_node    | UUID        | 指向的知识节点                                    |
+| id         | BIGSERIAL   | 数据库自增主键（内部使用）                              |
+| edge_id    | UUID        | 边的业务唯一标识（对外暴露）                             |
+| from_node  | UUID        | 起始知识节点业务 UUID                               |
+| to_node    | UUID        | 指向的知识节点业务 UUID                              |
 | edge_type  | VARCHAR(64) | 关系类型（cites / derives_from / contradicts 等） |
 | created_at | TIMESTAMP   | 关系创建时间                                     |
 
@@ -226,9 +251,10 @@ USING ivfflat (embedding vector_cosine_ops);
 
 ```sql
 CREATE TABLE knowledge_edges (
-    id UUID PRIMARY KEY,
-    from_node UUID NOT NULL REFERENCES knowledge_nodes(id) ON DELETE CASCADE,
-    to_node UUID NOT NULL REFERENCES knowledge_nodes(id) ON DELETE CASCADE,
+    id BIGSERIAL PRIMARY KEY,
+    edge_id UUID NOT NULL UNIQUE,
+    from_node UUID NOT NULL,
+    to_node UUID NOT NULL,
     edge_type VARCHAR(64) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
 );
@@ -250,31 +276,36 @@ CREATE INDEX idx_knowledge_edges_type ON knowledge_edges(edge_type);
 
 **tags 表**：
 
-| 字段   | 类型          | 说明       |
-| ---- | ----------- | -------- |
-| id   | UUID        | 标签唯一标识   |
-| name | VARCHAR(64) | 标签名称（唯一） |
+| 字段     | 类型          | 说明             |
+| ------ | ----------- | -------------- |
+| id     | BIGSERIAL   | 数据库自增主键（内部使用）  |
+| tag_id | UUID        | 标签业务唯一标识（对外暴露） |
+| name   | VARCHAR(64) | 标签名称（唯一）       |
 
-**knowledge_node_tags 表**：
+**knowledge_node_tags 表**（关联表使用业务 UUID）：
 
-| 字段      | 类型   | 说明      |
-| ------- | ---- | ------- |
-| node_id | UUID | 知识节点 ID |
-| tag_id  | UUID | 标签 ID   |
+| 字段      | 类型   | 说明              |
+| ------- | ---- | --------------- |
+| node_id | UUID | 知识节点业务 UUID      |
+| tag_id  | UUID | 标签业务 UUID        |
 
 **DDL**：
 
 ```sql
 CREATE TABLE tags (
-    id UUID PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
+    tag_id UUID NOT NULL UNIQUE,
     name VARCHAR(64) UNIQUE NOT NULL
 );
 
 CREATE TABLE knowledge_node_tags (
-    node_id UUID REFERENCES knowledge_nodes(id) ON DELETE CASCADE,
-    tag_id UUID REFERENCES tags(id) ON DELETE CASCADE,
+    node_id UUID NOT NULL,
+    tag_id UUID NOT NULL,
     PRIMARY KEY (node_id, tag_id)
 );
+
+CREATE INDEX idx_node_tags_node ON knowledge_node_tags(node_id);
+CREATE INDEX idx_node_tags_tag ON knowledge_node_tags(tag_id);
 ```
 
 ---
@@ -289,8 +320,9 @@ CREATE TABLE knowledge_node_tags (
 
 | 字段         | 类型          | 说明                                      |
 | ---------- | ----------- | --------------------------------------- |
-| id         | UUID        | AI 任务唯一标识                               |
-| node_id    | UUID        | 关联的知识节点                                 |
+| id         | BIGSERIAL   | 数据库自增主键（内部使用）                           |
+| task_id    | UUID        | AI 任务业务唯一标识（对外暴露）                        |
+| node_id    | UUID        | 关联的知识节点业务 UUID                           |
 | version    | INT         | 任务对应的 Markdown 版本                       |
 | task_type  | VARCHAR(32) | 任务类型（chunk / embedding / summary 等）     |
 | status     | VARCHAR(16) | 任务状态（pending / running / done / failed） |
@@ -301,14 +333,19 @@ CREATE TABLE knowledge_node_tags (
 
 ```sql
 CREATE TABLE ai_tasks (
-    id UUID PRIMARY KEY,
-    node_id UUID REFERENCES knowledge_nodes(id) ON DELETE CASCADE,
+    id BIGSERIAL PRIMARY KEY,
+    task_id UUID NOT NULL UNIQUE,
+    node_id UUID NOT NULL,
     version INT,
-    task_type VARCHAR(32),
-    status VARCHAR(16),
+    task_type VARCHAR(32) NOT NULL,
+    status VARCHAR(16) NOT NULL,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE INDEX idx_ai_tasks_node ON ai_tasks(node_id);
+CREATE INDEX idx_ai_tasks_type ON ai_tasks(task_type);
+CREATE INDEX idx_ai_tasks_status ON ai_tasks(status);
 ```
 
 ---

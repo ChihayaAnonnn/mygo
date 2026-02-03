@@ -8,7 +8,8 @@ import (
 
 // EdgePO 是 knowledge_edges 的数据库存储模型（Persistence Object）
 type EdgePO struct {
-	ID        string    `gorm:"column:id;type:uuid;primaryKey"`
+	ID        int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	EdgeID    string    `gorm:"column:edge_id;type:uuid;not null;uniqueIndex"`
 	FromNode  string    `gorm:"column:from_node;type:uuid;not null;index:idx_knowledge_edges_from"`
 	ToNode    string    `gorm:"column:to_node;type:uuid;not null;index:idx_knowledge_edges_to"`
 	EdgeType  string    `gorm:"column:edge_type;type:varchar(64);not null;index:idx_knowledge_edges_type"`
@@ -24,6 +25,7 @@ func EdgePOFromDomain(e *domain.Edge) *EdgePO {
 	}
 	return &EdgePO{
 		ID:        e.ID,
+		EdgeID:    e.EdgeID,
 		FromNode:  e.FromNode,
 		ToNode:    e.ToNode,
 		EdgeType:  string(e.EdgeType),
@@ -38,6 +40,7 @@ func (p *EdgePO) ToDomain() *domain.Edge {
 	}
 	return &domain.Edge{
 		ID:        p.ID,
+		EdgeID:    p.EdgeID,
 		FromNode:  p.FromNode,
 		ToNode:    p.ToNode,
 		EdgeType:  domain.EdgeType(p.EdgeType),

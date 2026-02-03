@@ -10,8 +10,9 @@ type AITaskID string
 
 // AITask AI 处理流程的可追溯任务记录
 type AITask struct {
-	ID        AITaskID     // AI 任务唯一标识（UUID）
-	NodeID    KnowledgeID  // 关联的知识节点
+	ID        int64        // 数据库自增主键（内部使用）
+	TaskID    AITaskID     // AI 任务唯一标识（UUID，对外暴露）
+	NodeID    KnowledgeID  // 关联的知识节点 UUID
 	Version   *int         // 任务对应的 Markdown 版本
 	TaskType  AITaskType   // 任务类型
 	Status    AITaskStatus // 任务状态
