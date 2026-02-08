@@ -8,6 +8,9 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// RedisClient 作为 infra 暴露给上层的依赖类型别名
+type RedisClient = redis.Client
+
 // NewRedis 连接 Redis
 // url 示例: redis://:password@localhost:6379/0
 func NewRedis(url string) (*redis.Client, error) {

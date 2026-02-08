@@ -2,12 +2,7 @@ package infra
 
 import (
 	"fmt"
-
-	"github.com/redis/go-redis/v9"
 )
-
-// RedisClient 作为 infra 暴露给上层的依赖类型别名，
-type RedisClient = redis.Client
 
 // Config 统一承载 infra 初始化需要的配置。
 type Config struct {
