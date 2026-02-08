@@ -2,6 +2,8 @@ package application
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"mygo/internal/knowledge/domain"
 )
@@ -9,14 +11,13 @@ import (
 // ==================== KnowledgeApplicationService（应用层编排） ====================
 
 // KnowledgeApplicationService 应用层编排接口
-// 职责：编排多个底层 Service，对外提供高层用例（Use Case）
 type KnowledgeApplicationService interface {
-	// PublishKnowledge 发布知识
-	// 流程：更新状态 -> 渲染文件 -> 构建 Chunk -> 生成 Embedding
+	// PublishKnowledge 发布知识（仅更新状态 + 渲染文件）
+	// Chunk/Embedding 由 Agent 端主动调用写入 API
 	PublishKnowledge(ctx context.Context, knowledgeID domain.KnowledgeID) error
 
-	// RebuildIndex 重建知识索引
-	// 流程：删除旧 Chunk/Embedding -> 重新构建 Chunk -> 重新生成 Embedding
+	// RebuildIndex 清除旧的 Chunk/Embedding 数据
+	// Agent 负责重新生成并写入
 	RebuildIndex(ctx context.Context, knowledgeID domain.KnowledgeID) error
 }
 
@@ -24,15 +25,10 @@ type KnowledgeApplicationService interface {
 
 // AppService 应用服务实现
 type AppService struct {
-	// 领域服务依赖
 	knowledgeSvc domain.KnowledgeService
 	versionSvc   domain.KnowledgeVersionService
 	renderSvc    domain.MarkdownRenderService
-	chunkSvc     domain.KnowledgeChunkService
-	embeddingSvc domain.EmbeddingService
-	retrievalSvc domain.RetrievalService
 
-	// 仓储依赖（用于事务操作）
 	knowledgeRepo domain.KnowledgeRepository
 	versionRepo   domain.VersionRepository
 	chunkRepo     domain.ChunkRepository
@@ -44,9 +40,6 @@ func NewAppService(
 	knowledgeSvc domain.KnowledgeService,
 	versionSvc domain.KnowledgeVersionService,
 	renderSvc domain.MarkdownRenderService,
-	chunkSvc domain.KnowledgeChunkService,
-	embeddingSvc domain.EmbeddingService,
-	retrievalSvc domain.RetrievalService,
 	knowledgeRepo domain.KnowledgeRepository,
 	versionRepo domain.VersionRepository,
 	chunkRepo domain.ChunkRepository,
@@ -56,9 +49,6 @@ func NewAppService(
 		knowledgeSvc:  knowledgeSvc,
 		versionSvc:    versionSvc,
 		renderSvc:     renderSvc,
-		chunkSvc:      chunkSvc,
-		embeddingSvc:  embeddingSvc,
-		retrievalSvc:  retrievalSvc,
 		knowledgeRepo: knowledgeRepo,
 		versionRepo:   versionRepo,
 		chunkRepo:     chunkRepo,
@@ -68,22 +58,60 @@ func NewAppService(
 
 // PublishKnowledge 发布知识
 func (s *AppService) PublishKnowledge(ctx context.Context, knowledgeID domain.KnowledgeID) error {
-	// TODO: 实现发布流程
-	// 1. 获取知识及其最新版本
-	// 2. 更新知识状态为 published
-	// 3. 渲染 Markdown 到文件
-	// 4. 构建 Chunk
-	// 5. 生成 Embedding
+	// 1. 获取知识节点
+	node, err := s.knowledgeRepo.GetByID(ctx, knowledgeID)
+	if err != nil {
+		return fmt.Errorf("get knowledge: %w", err)
+	}
+
+	// 2. 更新状态为 published
+	node.Status = domain.NodeStatusPublished
+	node.UpdatedAt = time.Now()
+	if err := s.knowledgeRepo.Update(ctx, node); err != nil {
+		return fmt.Errorf("update status: %w", err)
+	}
+
+	// 3. 渲染文件（如果 renderSvc 可用）
+	if s.renderSvc != nil {
+		version, err := s.versionRepo.GetLatestByKnowledge(ctx, knowledgeID)
+		if err != nil {
+			return fmt.Errorf("get latest version: %w", err)
+		}
+		if _, err := s.renderSvc.RenderToFile(ctx, version); err != nil {
+			return fmt.Errorf("render file: %w", err)
+		}
+	}
+
 	return nil
 }
 
-// RebuildIndex 重建知识索引
+// RebuildIndex 清除旧的 Chunk/Embedding 数据
 func (s *AppService) RebuildIndex(ctx context.Context, knowledgeID domain.KnowledgeID) error {
-	// TODO: 实现重建索引流程
-	// 1. 获取知识的最新版本
-	// 2. 删除旧的 Chunk 和 Embedding
-	// 3. 重新构建 Chunk
-	// 4. 重新生成 Embedding
+	// 1. 获取最新版本
+	version, err := s.versionRepo.GetLatestByKnowledge(ctx, knowledgeID)
+	if err != nil {
+		return fmt.Errorf("get latest version: %w", err)
+	}
+
+	nodeID := domain.KnowledgeID(version.NodeID)
+
+	// 2. 删除旧的 Embedding
+	if s.chunkRepo != nil && s.embeddingRepo != nil {
+		oldChunks, err := s.chunkRepo.ListByNodeVersion(ctx, nodeID, version.Version)
+		if err == nil && len(oldChunks) > 0 {
+			chunkIDs := make([]domain.ChunkID, 0, len(oldChunks))
+			for _, c := range oldChunks {
+				chunkIDs = append(chunkIDs, domain.ChunkID(c.ChunkID))
+			}
+			_ = s.embeddingRepo.DeleteByChunkIDs(ctx, chunkIDs)
+		}
+	}
+
+	// 3. 删除旧的 Chunk
+	if s.chunkRepo != nil {
+		_ = s.chunkRepo.DeleteByNodeVersion(ctx, nodeID, version.Version)
+	}
+
 	return nil
 }
 

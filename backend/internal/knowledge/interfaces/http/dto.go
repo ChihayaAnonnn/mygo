@@ -58,6 +58,26 @@ type VersionResponse struct {
 
 // ==================== Chunk DTOs ====================
 
+// BatchCreateChunksRequest 批量创建分块请求（Agent 端预切分后写入）
+type BatchCreateChunksRequest struct {
+	Version int               `json:"version" binding:"required"`
+	Chunks  []CreateChunkItem `json:"chunks" binding:"required,min=1"`
+}
+
+// CreateChunkItem 单个分块数据
+type CreateChunkItem struct {
+	ChunkID     string `json:"chunk_id" binding:"required"`
+	HeadingPath string `json:"heading_path"`
+	Content     string `json:"content" binding:"required"`
+	TokenCount  *int   `json:"token_count"`
+	ChunkIndex  *int   `json:"chunk_index"`
+}
+
+// DeleteChunksRequest 删除分块请求
+type DeleteChunksRequest struct {
+	Version int `json:"version" binding:"required"`
+}
+
 // ChunkResponse 分块响应
 type ChunkResponse struct {
 	ID          string    `json:"id"`
@@ -70,10 +90,24 @@ type ChunkResponse struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
+// ==================== Embedding DTOs ====================
+
+// BatchCreateEmbeddingsRequest 批量创建向量请求（Agent 端预计算后写入）
+type BatchCreateEmbeddingsRequest struct {
+	Embeddings []CreateEmbeddingItem `json:"embeddings" binding:"required,min=1"`
+}
+
+// CreateEmbeddingItem 单个向量数据
+type CreateEmbeddingItem struct {
+	ChunkID   string    `json:"chunk_id" binding:"required"`
+	Embedding []float32 `json:"embedding" binding:"required"`
+	Model     string    `json:"model" binding:"required"`
+}
+
 // ==================== Search DTOs ====================
 
-// SearchRequest 搜索请求
+// SearchRequest 向量搜索请求（Agent 端传入预计算的 query 向量）
 type SearchRequest struct {
-	Query string `json:"query" binding:"required"`
-	TopK  int    `json:"top_k"`
+	Vector []float32 `json:"vector" binding:"required"`
+	TopK   int       `json:"top_k"`
 }

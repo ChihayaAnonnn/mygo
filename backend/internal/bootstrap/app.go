@@ -96,31 +96,38 @@ func (app *App) initKnowledgeModule() error {
 		return err
 	}
 
+	chunkRepo, err := knowledgePersistence.NewChunkRepository(app.Resources)
+	if err != nil {
+		return err
+	}
+
+	embeddingRepo, err := knowledgePersistence.NewEmbeddingRepository(app.Resources)
+	if err != nil {
+		return err
+	}
+
 	// Domain Services
 	knowledgeSvc := knowledgeApp.NewKnowledgeService(nodeRepo)
 	versionSvc := knowledgeApp.NewVersionService(versionRepo, nodeRepo)
 
-	// Application Service (P1 依赖暂传 nil，后续补全)
+	// Application Service
 	appSvc := knowledgeApp.NewAppService(
 		knowledgeSvc,
 		versionSvc,
 		nil, // renderSvc - P2
-		nil, // chunkSvc - P1
-		nil, // embeddingSvc - P1
-		nil, // retrievalSvc - P1
 		nodeRepo,
 		versionRepo,
-		nil, // chunkRepo - P1
-		nil, // embeddingRepo - P1
+		chunkRepo,
+		embeddingRepo,
 	)
 
 	// HTTP Handler
 	app.KnowledgeHandler = knowledgeHttp.NewHandler(
 		knowledgeSvc,
 		versionSvc,
-		nil, // chunkSvc - P1
-		nil, // retrievalSvc - P1
 		appSvc,
+		chunkRepo,
+		embeddingRepo,
 	)
 
 	log.Println("Knowledge module initialized")

@@ -1,26 +1,27 @@
 # Knowledge 领域模块
 
-知识基础设施层：结构化存储、版本管理、Chunk 切分、Embedding 生成、图谱关系、语义检索。
-
-作为 Agent External Cognitive System 的底层，为 Memory 模块提供存储和检索能力。
+Data Plane 数据服务：为外部 Agent 提供 Knowledge 数据的 CRUD 和向量检索 API。
 
 ## 目录结构
 
-```
+```text
 knowledge/
 ├── domain/
 │   ├── model.go        # Node, Version, Chunk, Edge, Embedding
-│   ├── repository.go   # 5 个 Repository 接口
-│   ├── service.go      # 6 个 Service 接口
-│   └── types.go        # ID 类型、枚举、Command/Query、错误
+│   ├── repository.go   # Repository 接口
+│   ├── service.go      # Service 接口（KnowledgeService, VersionService）
+│   ├── types.go        # ID 类型、枚举、Command/Query、错误
+│   ├── ai_task.go      # AITask 模型
+│   └── tag.go          # Tag 模型
 │
 ├── application/
-│   └── app_service.go  # KnowledgeApplicationService 实现
+│   ├── app_service.go      # KnowledgeApplicationService（发布、重建索引）
+│   ├── knowledge_service.go # KnowledgeService 实现
+│   ├── version_service.go   # VersionService 实现
+│   └── ai_task_service.go   # AITaskService 实现
 │
 ├── infrastructure/
-│   ├── persistence/    # PO 模型（Node/Version/Chunk/Edge/Embedding）
-│   ├── filesystem/     # 文件存储（预留）
-│   └── ai/             # Embedder, Chunker（预留）
+│   └── persistence/    # PO 模型 + Repository 实现
 │
 └── interfaces/http/
     ├── handler.go
@@ -34,10 +35,7 @@ knowledge/
 |------|------|
 | `KnowledgeService` | 知识元服务：元信息与生命周期 |
 | `KnowledgeVersionService` | 版本服务：Markdown 版本演化 |
-| `MarkdownRenderService` | 文件派生服务：DB → FS |
-| `KnowledgeChunkService` | 切分服务：Markdown → Chunk |
-| `EmbeddingService` | 向量计算：Chunk → Vector |
-| `RetrievalService` | 语义检索：RAG 入口 |
+| `MarkdownRenderService` | 文件派生服务：DB -> FS（预留） |
 
 ## API 接口
 
@@ -59,13 +57,32 @@ knowledge/
 | GET | /api/knowledge/:id/versions | 列出版本 |
 | GET | /api/knowledge/:id/versions/latest | 最新版本 |
 
+### Chunk 管理（Agent 写入预切分数据）
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| POST | /api/knowledge/:id/chunks | 批量写入 Chunk |
+| GET | /api/knowledge/:id/chunks | 列出 Chunk |
+| DELETE | /api/knowledge/:id/chunks | 删除 Chunk |
+
+### Embedding 管理（Agent 写入预计算向量）
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| POST | /api/knowledge/embeddings | 批量写入 Embedding |
+
+### 搜索（Agent 传入预计算的 query 向量）
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| POST | /api/knowledge/search | 向量相似度搜索 |
+
 ### 应用操作
 
 | 方法 | 路径 | 描述 |
 |------|------|------|
-| POST | /api/knowledge/:id/publish | 发布知识 |
-| POST | /api/knowledge/:id/rebuild-index | 重建索引 |
-| POST | /api/knowledge/search | 语义搜索 |
+| POST | /api/knowledge/:id/publish | 发布知识（更新状态） |
+| POST | /api/knowledge/:id/rebuild-index | 清除旧索引数据 |
 
 ## 相关文档
 

@@ -2,19 +2,18 @@
 
 ## 项目概述
 
-这是一个 **Agent External Cognitive System（Agent 外部认知系统）**。
-核心目标是为 AI Agent 提供持久化的知识存储和记忆管理能力，让 Agent 在跨会话场景下保持认知连续性，减少遗忘，持续学习。
+这是一个 **Data Plane Service for AI Agent**。
+核心目标是为外部 AI Agent（ave_mujica）提供高并发的数据存储、CRUD 和向量检索 API。mygo 只负责数据进出，不包含 AI 计算或 Agent 编排逻辑。
 
 ### 核心设计共识
 
 - **Database as Source of Truth**: 数据库是知识事实源，Markdown 完整内容存于 DB，文件系统中的 `.md` 仅是可重建的投影。
-- **Knowledge as Infrastructure**: Knowledge 模块是底层基础设施，负责知识的结构化存储、版本管理、Chunk 切分、Embedding 生成、图谱关系、语义检索。
-- **Memory as Agent Interface**: Memory 模块是 Agent 视角的读写抽象层，负责记忆的生命周期管理（创建、检索、巩固、衰减、遗忘）。
-- **依赖关系**: `Memory → Knowledge → Infrastructure(DB/FS/AI)`
+- **Data Plane Only**: mygo 只负责数据存储和检索（CRUD + 向量搜索），不做 Chunking、Embedding 计算、Memory 管理、RAG pipeline 等 Intelligence Plane 逻辑。
+- **Agent 端职责分离**: Chunking、Embedding 生成、Memory 管理（store/retrieve/reflect/forget）、Agent 编排均由 ave_mujica（Python）负责。
 - **三层模型**:
   - DB：事实层（版本、关系、Chunk、Embedding）
   - FS：投影层（人类可读 Markdown，存储于 `/workspace/data/knowledge`）
-  - AI：推理层（RAG / Agent，全异步可重建）
+  - AI：推理层（由 ave_mujica 负责，mygo 不涉及）
 
 ## 技术架构与关键目录
 
@@ -33,8 +32,7 @@
   - `internal/bootstrap/`: 启动引导（app/http/worker/migrate）
   - `internal/server/`: 全局路由聚合
   - `internal/user/`: User 领域模块
-  - `internal/knowledge/`: Knowledge 领域模块（知识基础设施）
-  - `internal/memory/`: Memory 领域模块（Agent 记忆管理）
+  - `internal/knowledge/`: Knowledge 领域模块（数据 CRUD + 向量检索）
   - `internal/infra/`: 共享基础设施 (DB, Redis)
 
 #### Clean Architecture 领域模块结构
@@ -122,8 +120,7 @@ interfaces → domain ← application
 | 文档 | 说明 |
 | --- | --- |
 | [user/README.md](backend/internal/user/README.md) | User 模块：API、模型、接口 |
-| [knowledge/README.md](backend/internal/knowledge/README.md) | Knowledge 模块：存储、版本、AI 管线、检索 |
-| [memory/README.md](backend/internal/memory/README.md) | Memory 模块：Agent 记忆生命周期管理 |
+| [knowledge/README.md](backend/internal/knowledge/README.md) | Knowledge 模块：数据 CRUD、向量检索 |
 
 ### 前端文档 (`frontend/`)
 

@@ -18,11 +18,19 @@ func RegisterRoutes(r *gin.RouterGroup, h *Handler) {
 		knowledge.GET("/:id/versions", h.ListVersions)
 		knowledge.GET("/:id/versions/latest", h.GetLatestVersion)
 
+		// Chunk 管理（Agent 写入预切分数据）
+		knowledge.POST("/:id/chunks", h.BatchCreateChunks)
+		knowledge.GET("/:id/chunks", h.ListChunks)
+		knowledge.DELETE("/:id/chunks", h.DeleteChunks)
+
+		// Embedding 管理（Agent 写入预计算向量）
+		knowledge.POST("/embeddings", h.BatchCreateEmbeddings)
+
+		// 向量搜索（Agent 传入预计算的 query 向量）
+		knowledge.POST("/search", h.Search)
+
 		// 应用层操作
 		knowledge.POST("/:id/publish", h.PublishKnowledge)
 		knowledge.POST("/:id/rebuild-index", h.RebuildIndex)
-
-		// 语义搜索
-		knowledge.POST("/search", h.Search)
 	}
 }

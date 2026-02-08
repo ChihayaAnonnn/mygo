@@ -28,8 +28,8 @@ type VersionRepository interface {
 // ChunkRepository 知识分块的仓储接口（基础设施层实现）
 type ChunkRepository interface {
 	BatchCreate(ctx context.Context, chunks []*Chunk) error
-	ListByVersion(ctx context.Context, versionID VersionID) ([]*Chunk, error)
-	DeleteByVersion(ctx context.Context, versionID VersionID) error
+	ListByNodeVersion(ctx context.Context, nodeID KnowledgeID, version int) ([]*Chunk, error)
+	DeleteByNodeVersion(ctx context.Context, nodeID KnowledgeID, version int) error
 }
 
 // ==================== EmbeddingRepository ====================

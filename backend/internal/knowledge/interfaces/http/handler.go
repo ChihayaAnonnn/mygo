@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"time"
 
 	"mygo/internal/knowledge/application"
 	"mygo/internal/knowledge/domain"
@@ -11,27 +12,27 @@ import (
 
 // Handler 知识 HTTP 处理器
 type Handler struct {
-	knowledgeSvc domain.KnowledgeService
-	versionSvc   domain.KnowledgeVersionService
-	chunkSvc     domain.KnowledgeChunkService
-	retrievalSvc domain.RetrievalService
-	appSvc       application.KnowledgeApplicationService
+	knowledgeSvc  domain.KnowledgeService
+	versionSvc    domain.KnowledgeVersionService
+	appSvc        application.KnowledgeApplicationService
+	chunkRepo     domain.ChunkRepository
+	embeddingRepo domain.EmbeddingRepository
 }
 
 // NewHandler 构造函数
 func NewHandler(
 	knowledgeSvc domain.KnowledgeService,
 	versionSvc domain.KnowledgeVersionService,
-	chunkSvc domain.KnowledgeChunkService,
-	retrievalSvc domain.RetrievalService,
 	appSvc application.KnowledgeApplicationService,
+	chunkRepo domain.ChunkRepository,
+	embeddingRepo domain.EmbeddingRepository,
 ) *Handler {
 	return &Handler{
-		knowledgeSvc: knowledgeSvc,
-		versionSvc:   versionSvc,
-		chunkSvc:     chunkSvc,
-		retrievalSvc: retrievalSvc,
-		appSvc:       appSvc,
+		knowledgeSvc:  knowledgeSvc,
+		versionSvc:    versionSvc,
+		appSvc:        appSvc,
+		chunkRepo:     chunkRepo,
+		embeddingRepo: embeddingRepo,
 	}
 }
 
@@ -248,9 +249,120 @@ func (h *Handler) ListVersions(c *gin.Context) {
 	success(c, items)
 }
 
+// ==================== Chunk Handlers ====================
+
+// BatchCreateChunks 批量创建分块（Agent 端预切分后写入）
+// POST /api/knowledge/:id/chunks
+func (h *Handler) BatchCreateChunks(c *gin.Context) {
+	nodeID := domain.KnowledgeID(c.Param("id"))
+
+	var req BatchCreateChunksRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fail(c, http.StatusBadRequest, 400, "invalid request body")
+		return
+	}
+
+	now := time.Now()
+	chunks := make([]*domain.Chunk, 0, len(req.Chunks))
+	for _, item := range req.Chunks {
+		chunks = append(chunks, &domain.Chunk{
+			ChunkID:     item.ChunkID,
+			NodeID:      string(nodeID),
+			Version:     req.Version,
+			HeadingPath: item.HeadingPath,
+			Content:     item.Content,
+			TokenCount:  item.TokenCount,
+			ChunkIndex:  item.ChunkIndex,
+			CreatedAt:   now,
+		})
+	}
+
+	if err := h.chunkRepo.BatchCreate(c.Request.Context(), chunks); err != nil {
+		fail(c, http.StatusInternalServerError, 500, "internal server error")
+		return
+	}
+
+	success(c, map[string]int{"count": len(chunks)})
+}
+
+// ListChunks 列出分块
+// GET /api/knowledge/:id/chunks?version=1
+func (h *Handler) ListChunks(c *gin.Context) {
+	nodeID := domain.KnowledgeID(c.Param("id"))
+
+	var query struct {
+		Version int `form:"version" binding:"required"`
+	}
+	if err := c.ShouldBindQuery(&query); err != nil {
+		fail(c, http.StatusBadRequest, 400, "version is required")
+		return
+	}
+
+	chunks, err := h.chunkRepo.ListByNodeVersion(c.Request.Context(), nodeID, query.Version)
+	if err != nil {
+		fail(c, http.StatusInternalServerError, 500, "internal server error")
+		return
+	}
+
+	items := make([]*ChunkResponse, 0, len(chunks))
+	for _, chunk := range chunks {
+		items = append(items, chunkToResponse(chunk))
+	}
+	success(c, items)
+}
+
+// DeleteChunks 删除分块
+// DELETE /api/knowledge/:id/chunks
+func (h *Handler) DeleteChunks(c *gin.Context) {
+	nodeID := domain.KnowledgeID(c.Param("id"))
+
+	var req DeleteChunksRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fail(c, http.StatusBadRequest, 400, "invalid request body")
+		return
+	}
+
+	if err := h.chunkRepo.DeleteByNodeVersion(c.Request.Context(), nodeID, req.Version); err != nil {
+		fail(c, http.StatusInternalServerError, 500, "internal server error")
+		return
+	}
+
+	success(c, nil)
+}
+
+// ==================== Embedding Handlers ====================
+
+// BatchCreateEmbeddings 批量创建向量（Agent 端预计算后写入）
+// POST /api/knowledge/embeddings
+func (h *Handler) BatchCreateEmbeddings(c *gin.Context) {
+	var req BatchCreateEmbeddingsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fail(c, http.StatusBadRequest, 400, "invalid request body")
+		return
+	}
+
+	now := time.Now()
+	embeddings := make([]*domain.Embedding, 0, len(req.Embeddings))
+	for _, item := range req.Embeddings {
+		embeddings = append(embeddings, &domain.Embedding{
+			ChunkID:   item.ChunkID,
+			Embedding: item.Embedding,
+			Model:     item.Model,
+			CreatedAt: now,
+		})
+	}
+
+	if err := h.embeddingRepo.BatchCreate(c.Request.Context(), embeddings); err != nil {
+		fail(c, http.StatusInternalServerError, 500, "internal server error")
+		return
+	}
+
+	success(c, map[string]int{"count": len(embeddings)})
+}
+
 // ==================== Search Handlers ====================
 
-// Search 语义搜索
+// Search 向量搜索（Agent 端传入预计算的 query 向量）
 // POST /api/knowledge/search
 func (h *Handler) Search(c *gin.Context) {
 	var req SearchRequest
@@ -264,7 +376,30 @@ func (h *Handler) Search(c *gin.Context) {
 		topK = 10
 	}
 
-	chunks, err := h.retrievalSvc.Search(c.Request.Context(), req.Query, topK)
+	// 向量相似度搜索
+	chunkIDs, err := h.embeddingRepo.SearchSimilar(c.Request.Context(), domain.EmbeddingVector(req.Vector), topK)
+	if err != nil {
+		fail(c, http.StatusInternalServerError, 500, "internal server error")
+		return
+	}
+
+	if len(chunkIDs) == 0 {
+		success(c, []*ChunkResponse{})
+		return
+	}
+
+	// 获取 Chunk 详情
+	type chunkByIDsGetter interface {
+		GetByIDs(ctx interface{}, chunkIDs []domain.ChunkID) ([]*domain.Chunk, error)
+	}
+
+	getter, ok := h.chunkRepo.(chunkByIDsGetter)
+	if !ok {
+		fail(c, http.StatusInternalServerError, 500, "chunk repo does not support GetByIDs")
+		return
+	}
+
+	chunks, err := getter.GetByIDs(c.Request.Context(), chunkIDs)
 	if err != nil {
 		fail(c, http.StatusInternalServerError, 500, "internal server error")
 		return
@@ -292,7 +427,7 @@ func (h *Handler) PublishKnowledge(c *gin.Context) {
 	success(c, nil)
 }
 
-// RebuildIndex 重建索引
+// RebuildIndex 重建索引（仅删除旧数据，Agent 负责重新生成）
 // POST /api/knowledge/:id/rebuild-index
 func (h *Handler) RebuildIndex(c *gin.Context) {
 	id := domain.KnowledgeID(c.Param("id"))
@@ -312,7 +447,7 @@ func knowledgeToResponse(node *domain.Node) *KnowledgeResponse {
 		return nil
 	}
 	return &KnowledgeResponse{
-		ID:             node.NodeID, // 对外暴露业务 UUID
+		ID:             node.NodeID,
 		NodeType:       string(node.NodeType),
 		Title:          node.Title,
 		Summary:        node.Summary,
@@ -329,7 +464,7 @@ func versionToResponse(version *domain.Version) *VersionResponse {
 		return nil
 	}
 	return &VersionResponse{
-		ID:        version.VersionID, // 对外暴露业务 UUID
+		ID:        version.VersionID,
 		NodeID:    version.NodeID,
 		Version:   version.Version,
 		ContentMd: version.ContentMd,
@@ -342,7 +477,7 @@ func chunkToResponse(chunk *domain.Chunk) *ChunkResponse {
 		return nil
 	}
 	return &ChunkResponse{
-		ID:          chunk.ChunkID, // 对外暴露业务 UUID
+		ID:          chunk.ChunkID,
 		NodeID:      chunk.NodeID,
 		Version:     chunk.Version,
 		HeadingPath: chunk.HeadingPath,

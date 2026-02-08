@@ -53,34 +53,3 @@ type MarkdownRenderService interface {
 	// RemoveFile 移除版本对应的文件
 	RemoveFile(ctx context.Context, versionID VersionID) error
 }
-
-// ==================== 4. KnowledgeChunkService（切分服务） ====================
-
-// KnowledgeChunkService 切分服务接口
-// 职责：将 Markdown 内容切分为语义 Chunk，为 AI / Embedding 提供最小语义单元
-// Chunk 是可重建派生数据，允许未来切分策略变更（不影响原始内容）
-type KnowledgeChunkService interface {
-	// BuildChunks 构建版本的所有 Chunk
-	BuildChunks(ctx context.Context, version *Version) ([]*Chunk, error)
-
-	// ListChunks 列出版本的所有 Chunk
-	ListChunks(ctx context.Context, versionID VersionID) ([]*Chunk, error)
-}
-
-// ==================== 5. EmbeddingService（向量计算服务） ====================
-
-// EmbeddingService 向量计算服务接口
-// 职责：调用 Python / 模型服务生成向量
-type EmbeddingService interface {
-	// EmbedChunks 将 Chunk 列表转换为向量
-	EmbedChunks(ctx context.Context, chunks []*Chunk) ([]EmbeddingVector, error)
-}
-
-// ==================== 6. RetrievalService（检索服务） ====================
-
-// RetrievalService 检索服务接口
-// 职责：基于向量进行语义检索，是 RAG / 问答系统的入口
-type RetrievalService interface {
-	// Search 语义搜索，返回最相关的 Chunk
-	Search(ctx context.Context, query string, topK int) ([]*Chunk, error)
-}
