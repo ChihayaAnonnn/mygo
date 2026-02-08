@@ -2,13 +2,15 @@
 
 ## 项目概述
 
-这是一个 **AI-Native 个人知识库系统**。
-核心目标是构建以 **Knowledge** 为中心，支持 Markdown 编辑、多版本演进、AI 处理（Chunk / Embedding / RAG）的长期可演进系统。
+这是一个 **Agent External Cognitive System（Agent 外部认知系统）**。
+核心目标是为 AI Agent 提供持久化的知识存储和记忆管理能力，让 Agent 在跨会话场景下保持认知连续性，减少遗忘，持续学习。
 
 ### 核心设计共识
 
 - **Database as Source of Truth**: 数据库是知识事实源，Markdown 完整内容存于 DB，文件系统中的 `.md` 仅是可重建的投影。
-- **Knowledge Node**: 顶层抽象，支持版本管理、知识图谱（Graph）和 AI 推理。
+- **Knowledge as Infrastructure**: Knowledge 模块是底层基础设施，负责知识的结构化存储、版本管理、Chunk 切分、Embedding 生成、图谱关系、语义检索。
+- **Memory as Agent Interface**: Memory 模块是 Agent 视角的读写抽象层，负责记忆的生命周期管理（创建、检索、巩固、衰减、遗忘）。
+- **依赖关系**: `Memory → Knowledge → Infrastructure(DB/FS/AI)`
 - **三层模型**:
   - DB：事实层（版本、关系、Chunk、Embedding）
   - FS：投影层（人类可读 Markdown，存储于 `/workspace/data/knowledge`）
@@ -31,7 +33,8 @@
   - `internal/bootstrap/`: 启动引导（app/http/worker/migrate）
   - `internal/server/`: 全局路由聚合
   - `internal/user/`: User 领域模块
-  - `internal/knowledge/`: Knowledge 领域模块
+  - `internal/knowledge/`: Knowledge 领域模块（知识基础设施）
+  - `internal/memory/`: Memory 领域模块（Agent 记忆管理）
   - `internal/infra/`: 共享基础设施 (DB, Redis)
 
 #### Clean Architecture 领域模块结构
@@ -100,29 +103,32 @@ interfaces → domain ← application
 ### 根目录
 
 | 文档 | 说明 |
-|------|------|
+| --- | --- |
 | [ERRORS.md](ERRORS.md) | 常见错误记录（**开发时注意查阅**） |
 
 ### 后端文档 (`backend/docs/`)
 
 | 文档 | 说明 |
-|------|------|
-| [Architecture.md](backend/docs/Architecture.md) | 架构概览、目录结构、依赖规则 |
-| [DEVELOPMENT.md](backend/docs/DEVELOPMENT.md) | 开发指南、快速开始 |
+| --- | --- |
+| [architecture.md](backend/docs/architecture.md) | 架构概览、目录结构、依赖规则 |
+| [development.md](backend/docs/development.md) | 开发指南、快速开始 |
+| [writing_guide.md](backend/docs/writing_guide.md) | 文档编写规范（**编写文档前必读**） |
+| [naming_convention.md](backend/docs/naming_convention.md) | 文档命名规范 |
 | [knowledge_schema_design.md](backend/docs/knowledge_schema_design.md) | Knowledge 数据库设计 |
 | [knowledge_interface_design.md](backend/docs/knowledge_interface_design.md) | Knowledge 接口设计 |
 
 ### 领域模块文档 (`backend/internal/`)
 
 | 文档 | 说明 |
-|------|------|
+| --- | --- |
 | [user/README.md](backend/internal/user/README.md) | User 模块：API、模型、接口 |
-| [knowledge/README.md](backend/internal/knowledge/README.md) | Knowledge 模块：API、服务、接口 |
+| [knowledge/README.md](backend/internal/knowledge/README.md) | Knowledge 模块：存储、版本、AI 管线、检索 |
+| [memory/README.md](backend/internal/memory/README.md) | Memory 模块：Agent 记忆生命周期管理 |
 
 ### 前端文档 (`frontend/`)
 
 | 文档 | 说明 |
-|------|------|
+| --- | --- |
 | [DEVELOPMENT.md](frontend/DEVELOPMENT.md) | 前端开发指南 |
 | [DESIGN_SYSTEM.md](frontend/DESIGN_SYSTEM.md) | UI 设计规范（**开发前必读**） |
 
@@ -138,4 +144,5 @@ interfaces → domain ← application
 - **禁止扮演 Linter 角色**：不要手动修正代码格式或风格问题
 - **依赖自动化工具**：专注于逻辑实现，格式问题留给工具链处理
 - **遵循架构**：新增代码必须遵循 Clean Architecture 分层原则
+- **文档规范**：编写文档时遵循 [writing_guide.md](backend/docs/writing_guide.md)，使用 Markdown 格式，图表使用 Mermaid
 - **禁止使用 Emoji**：在文档、提交信息和代码注释中，除非用户明确要求，否则不要使用 Emoji 表情

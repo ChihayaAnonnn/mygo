@@ -1,6 +1,6 @@
 # 后端架构文档
 
-> 本项目采用 **Clean Architecture / DDD-lite** 架构，按领域模块组织代码。
+> Agent External Cognitive System 后端服务。采用 **Clean Architecture / DDD-lite** 架构，按领域模块组织代码。
 
 ## 目录结构
 
@@ -16,7 +16,8 @@
 │   ├── infra/                  # 共享基础设施（DB/Redis）
 │   ├── server/                 # 全局路由聚合
 │   ├── user/                   # ★ User 领域模块
-│   └── knowledge/              # ★ Knowledge 领域模块
+│   ├── knowledge/              # ★ Knowledge 领域模块（知识基础设施）
+│   └── memory/                 # ★ Memory 领域模块（Agent 记忆管理）
 │
 ├── deployments/                # 部署配置
 └── docs/                       # 文档
@@ -63,7 +64,8 @@ interfaces → domain ← application
 | 模块 | 说明 | 文档 |
 |------|------|------|
 | `user/` | 用户认证与会话管理 | [README](../internal/user/README.md) |
-| `knowledge/` | 知识图谱管理、版本控制、语义检索 | [README](../internal/knowledge/README.md) |
+| `knowledge/` | 知识存储、版本管理、AI 管线、语义检索 | [README](../internal/knowledge/README.md) |
+| `memory/` | Agent 记忆生命周期管理（store/retrieve/reflect/forget） | [README](../internal/memory/README.md) |
 
 ## 环境变量
 

@@ -1,6 +1,8 @@
 # Knowledge 领域模块
 
-知识图谱管理、版本控制、AI 语义检索。
+知识基础设施层：结构化存储、版本管理、Chunk 切分、Embedding 生成、图谱关系、语义检索。
+
+作为 Agent External Cognitive System 的底层，为 Memory 模块提供存储和检索能力。
 
 ## 目录结构
 

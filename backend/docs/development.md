@@ -46,14 +46,6 @@ go run cmd/migrate/main.go --dry-run
 
 1. 在 `internal/models/po/` 目录下创建新的 PO 文件，例如 `post_po.go`
 2. 编辑 `cmd/migrate/main.go`，在 `models` 切片中注册新模型：
-
-```go
-var models = []any{
-    &po.UserPO{},
-    &po.PostPO{},  // 新增
-}
-```
-
 3. 执行迁移：`go run cmd/migrate/main.go`
 
 ## 部署与环境
