@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"mygo/internal/config"
+	filesystemPersistence "mygo/internal/filesystem/infrastructure/persistence"
 	"mygo/internal/infra"
 	knowledgePersistence "mygo/internal/knowledge/infrastructure/persistence"
 	userPersistence "mygo/internal/user/infra/persistence"
@@ -21,6 +22,9 @@ type MigrateConfig struct {
 var migrateModels = []any{
 	// User 模块
 	&userPersistence.UserPO{},
+
+	// Filesystem 模块
+	&filesystemPersistence.ObjectPO{},
 
 	// Knowledge 模块
 	&knowledgePersistence.NodePO{},

@@ -117,10 +117,13 @@ interfaces → domain ← application
 
 ### 领域模块文档 (`backend/internal/`)
 
+> 每个领域模块的设计文档放在其自身目录下（`backend/internal/<domain>/README.md`），而非集中在 `backend/docs/`。
+
 | 文档 | 说明 |
 | --- | --- |
 | [user/README.md](backend/internal/user/README.md) | User 模块：API、模型、接口 |
 | [knowledge/README.md](backend/internal/knowledge/README.md) | Knowledge 模块：数据 CRUD、向量检索 |
+| [filesystem/README.md](backend/internal/filesystem/README.md) | Filesystem 模块：对象存储式 FS 层设计规范 |
 
 ### 前端文档 (`frontend/`)
 
