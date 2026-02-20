@@ -6,6 +6,7 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 )
 
 // GormDB 作为 infra 暴露给上层的 ORM 依赖类型别名，
@@ -20,7 +21,12 @@ func NewGormPG(dsn string) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to open gorm: dsn is empty")
 	}
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		// DryRun: true, // 开启时打印 SQL 但不执行
+		NamingStrategy: schema.NamingStrategy{
+			SingularTable: true,
+		},
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to open gorm: %w", err)
 	}
@@ -37,4 +43,3 @@ func NewGormPG(dsn string) (*gorm.DB, error) {
 
 	return db, nil
 }
-
