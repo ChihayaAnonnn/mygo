@@ -1,7 +1,6 @@
 package server
 
 import (
-	knowledgeHttp "mygo/internal/knowledge/interfaces/http"
 	userHttp "mygo/internal/user/interfaces/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,8 +8,7 @@ import (
 
 // RouterConfig 路由配置
 type RouterConfig struct {
-	UserHandler      *userHttp.Handler
-	KnowledgeHandler *knowledgeHttp.Handler
+	UserHandler *userHttp.Handler
 }
 
 // NewRouter 创建路由
@@ -35,9 +33,6 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 		// 注册各领域模块路由
 		if cfg.UserHandler != nil {
 			userHttp.RegisterRoutes(api, cfg.UserHandler)
-		}
-		if cfg.KnowledgeHandler != nil {
-			knowledgeHttp.RegisterRoutes(api, cfg.KnowledgeHandler)
 		}
 	}
 

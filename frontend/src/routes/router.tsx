@@ -1,10 +1,8 @@
 import { createBrowserRouter } from "react-router-dom";
 import RootLayout from "../layouts/RootLayout";
 import HomePage from "../pages/HomePage";
-import PostsPage from "../pages/PostsPage";
-import PostDetailPage from "../pages/PostDetailPage";
-import AboutPage from "../pages/AboutPage";
-import UploadPage from "../pages/UploadPage";
+import WorkDetailPage from "../pages/WorkDetailPage";
+import OpenClawShowcasePage from "../pages/OpenClawShowcasePage";
 import NotFoundPage from "../pages/NotFoundPage";
 
 export const router = createBrowserRouter([
@@ -13,12 +11,10 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: "posts", element: <PostsPage /> },
-      { path: "posts/:slug", element: <PostDetailPage /> },
-      { path: "about", element: <AboutPage /> },
+      { path: "works/:slug", element: <WorkDetailPage /> },
+      { path: "openclaw", element: <OpenClawShowcasePage /> },
     ],
   },
-  { path: "upload", element: <UploadPage /> },
   { path: "*", element: <NotFoundPage /> },
 ]);
 

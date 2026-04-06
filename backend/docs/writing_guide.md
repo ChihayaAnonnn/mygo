@@ -39,7 +39,7 @@ sequenceDiagram
     participant Repository
     
     Client->>Handler: HTTP Request
-    Handler->>Service: CreateKnowledge()
+    Handler->>Service: CreateUser()
     Service->>Repository: Save()
     Repository-->>Service: Entity
     Service-->>Handler: Result
@@ -50,22 +50,20 @@ sequenceDiagram
 
 ```mermaid
 erDiagram
-    KNOWLEDGE_NODE ||--o{ KNOWLEDGE_VERSION : has
-    KNOWLEDGE_NODE ||--o{ KNOWLEDGE_CHUNK : contains
-    KNOWLEDGE_VERSION ||--o{ KNOWLEDGE_CHUNK : generates
+    USER ||--o{ SESSION : owns
     
-    KNOWLEDGE_NODE {
+    USER {
         uuid id PK
-        string title
-        string status
+        string username
+        string email
         timestamp created_at
     }
     
-    KNOWLEDGE_VERSION {
+    SESSION {
         uuid id PK
-        uuid node_id FK
-        text content
-        int version_number
+        uuid user_id FK
+        string token
+        timestamp expires_at
     }
 ```
 

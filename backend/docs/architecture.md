@@ -1,6 +1,6 @@
 # 后端架构文档
 
-> Data Plane Service for AI Agent。采用 **Clean Architecture / DDD-lite** 架构，按领域模块组织代码。
+> 面向博客站与内容展示的后端服务。采用 **Clean Architecture / DDD-lite** 架构，按领域模块组织代码。
 
 ## 目录结构
 
@@ -16,7 +16,6 @@
 │   ├── infra/                  # 共享基础设施（DB/Redis）
 │   ├── server/                 # 全局路由聚合
 │   ├── user/                   # ★ User 领域模块
-│   └── knowledge/              # ★ Knowledge 领域模块（数据 CRUD + 向量检索）
 │
 ├── deployments/                # 部署配置
 └── docs/                       # 文档
@@ -63,7 +62,6 @@ interfaces → domain ← application
 | 模块 | 说明 | 文档 |
 |------|------|------|
 | `user/` | 用户认证与会话管理 | [README](../internal/user/README.md) |
-| `knowledge/` | 数据 CRUD（Node/Version/Chunk/Embedding）、向量检索 | [README](../internal/knowledge/README.md) |
 
 ## 环境变量
 
