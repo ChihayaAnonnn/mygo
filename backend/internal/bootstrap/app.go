@@ -5,9 +5,6 @@ import (
 
 	"mygo/internal/config"
 	"mygo/internal/infra"
-	knowledgeApp "mygo/internal/knowledge/application"
-	knowledgePersistence "mygo/internal/knowledge/infrastructure/persistence"
-	knowledgeHttp "mygo/internal/knowledge/interfaces/http"
 	"mygo/internal/server"
 	userApp "mygo/internal/user/application"
 	userCache "mygo/internal/user/infra/cache"
@@ -24,9 +21,6 @@ type App struct {
 
 	// User 模块
 	UserHandler *userHttp.Handler
-
-	// Knowledge 模块
-	KnowledgeHandler *knowledgeHttp.Handler
 }
 
 // NewApp 创建并初始化应用
@@ -50,10 +44,6 @@ func NewApp() (*App, error) {
 
 	// 3. 初始化各模块
 	if err := app.initUserModule(); err != nil {
-		return nil, err
-	}
-
-	if err := app.initKnowledgeModule(); err != nil {
 		return nil, err
 	}
 
@@ -83,62 +73,10 @@ func (app *App) initUserModule() error {
 	return nil
 }
 
-// initKnowledgeModule 初始化 Knowledge 模块
-func (app *App) initKnowledgeModule() error {
-	// Repository
-	nodeRepo, err := knowledgePersistence.NewNodeRepository(app.Resources)
-	if err != nil {
-		return err
-	}
-
-	versionRepo, err := knowledgePersistence.NewVersionRepository(app.Resources)
-	if err != nil {
-		return err
-	}
-
-	chunkRepo, err := knowledgePersistence.NewChunkRepository(app.Resources)
-	if err != nil {
-		return err
-	}
-
-	embeddingRepo, err := knowledgePersistence.NewEmbeddingRepository(app.Resources)
-	if err != nil {
-		return err
-	}
-
-	// Domain Services
-	knowledgeSvc := knowledgeApp.NewKnowledgeService(nodeRepo)
-	versionSvc := knowledgeApp.NewVersionService(versionRepo, nodeRepo)
-
-	// Application Service
-	appSvc := knowledgeApp.NewAppService(
-		knowledgeSvc,
-		versionSvc,
-		nil, // renderSvc - P2
-		nodeRepo,
-		versionRepo,
-		chunkRepo,
-		embeddingRepo,
-	)
-
-	// HTTP Handler
-	app.KnowledgeHandler = knowledgeHttp.NewHandler(
-		knowledgeSvc,
-		versionSvc,
-		appSvc,
-		chunkRepo,
-		embeddingRepo,
-	)
-
-	log.Println("Knowledge module initialized")
-	return nil
-}
-
 // RouterConfig 返回路由配置
 func (app *App) RouterConfig() server.RouterConfig {
 	return server.RouterConfig{
-		UserHandler:      app.UserHandler,
-		KnowledgeHandler: app.KnowledgeHandler,
+		UserHandler: app.UserHandler,
 	}
 }
 

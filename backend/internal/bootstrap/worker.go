@@ -36,10 +36,10 @@ func RunWorkerWithConfig(app *App, cfg WorkerConfig) error {
 
 	// TODO: 启动后台任务处理
 	// 示例任务类型：
-	// - AI Embedding 生成
-	// - Markdown 渲染
-	// - 知识索引重建
-	// - 定时清理任务
+	// - 静态内容预处理
+	// - 站点缓存刷新
+	// - 周期性清理任务
+	// - 异步通知或回调
 
 	// 等待中断信号
 	quit := make(chan os.Signal, 1)

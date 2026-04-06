@@ -1,7 +1,8 @@
 import { createBrowserRouter } from "react-router-dom";
 import RootLayout from "../layouts/RootLayout";
-import ComingSoonPage from "../pages/ComingSoonPage";
-import AuthPage from "../pages/AuthPage";
+import HomePage from "../pages/HomePage";
+import WorkDetailPage from "../pages/WorkDetailPage";
+import OpenClawShowcasePage from "../pages/OpenClawShowcasePage";
 import NotFoundPage from "../pages/NotFoundPage";
 
 export const router = createBrowserRouter([
@@ -9,10 +10,9 @@ export const router = createBrowserRouter([
     path: "/",
     element: <RootLayout />,
     children: [
-      { index: true, element: <ComingSoonPage /> },
-      { path: "auth", element: <AuthPage /> },
-      { path: "login", element: <AuthPage /> },
-      { path: "register", element: <AuthPage /> },
+      { index: true, element: <HomePage /> },
+      { path: "works/:slug", element: <WorkDetailPage /> },
+      { path: "openclaw", element: <OpenClawShowcasePage /> },
     ],
   },
   { path: "*", element: <NotFoundPage /> },

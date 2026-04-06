@@ -28,8 +28,8 @@ backend/docs/
 ├── development.md                   ✓ 开发指南
 ├── writing_guide.md                 ✓ 文档编写规范
 ├── naming_convention.md             ✓ 命名规范
-├── knowledge_schema_design.md       ✓ 数据库设计
-└── knowledge_interface_design.md    ✓ 接口设计
+├── content_model.md                 ✓ 内容模型设计（如有）
+└── deployment_notes.md              ✓ 部署说明（如有）
 ```
 
 ### 3. 模块级文档（全大写）
@@ -37,9 +37,6 @@ backend/docs/
 位于模块/包根目录的说明文档，使用全大写：
 
 ```text
-backend/internal/knowledge/
-└── README.md             ✓ 模块说明
-
 backend/internal/user/
 └── README.md             ✓ 模块说明
 ```
@@ -51,7 +48,7 @@ backend/internal/user/
 | 项目根目录 | 全大写 | `AGENT.md` | 醒目，表示重要性 |
 | 子项目根目录 | 全大写 | `frontend/DEVELOPMENT.md` | 相当于子项目的"门面" |
 | docs/ 目录 | 小写+下划线 | `architecture.md` | 技术文档数量多，统一小写易读 |
-| 模块根目录 | 全大写 | `knowledge/README.md` | 模块入口说明 |
+| 模块根目录 | 全大写 | `user/README.md` | 模块入口说明 |
 
 ## 重命名历史
 
