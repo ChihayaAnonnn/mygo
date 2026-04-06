@@ -2,25 +2,24 @@
 
 ## 项目概述
 
-这是一个 **Data Plane Service for AI Agent**。
-核心目标是为外部 AI Agent（ave_mujica）提供高并发的数据存储、CRUD 和向量检索 API。mygo 只负责数据进出，不包含 AI 计算或 Agent 编排逻辑。
+这是一个属于我自己的 **个人数字游乐场**。
+它是一个开放的个人网站与自由实验场，用来承载我想创造的一切：可以是文章、交互作品、视觉实验、AI 体验、多模态内容、数字人、二次元/动漫风格页面，或任何我感兴趣的表达形式。项目不预设唯一产品形态，重点是围绕我的兴趣、审美、表达欲与创造冲动持续演化。
 
 ### 核心设计共识
 
-- **Database as Source of Truth**: 数据库是知识事实源，Markdown 完整内容存于 DB，文件系统中的 `.md` 仅是可重建的投影。
-- **Data Plane Only**: mygo 只负责数据存储和检索（CRUD + 向量搜索），不做 Chunking、Embedding 计算、Memory 管理、RAG pipeline 等 Intelligence Plane 逻辑。
-- **Agent 端职责分离**: Chunking、Embedding 生成、Memory 管理（store/retrieve/reflect/forget）、Agent 编排均由 ave_mujica（Python）负责。
-- **三层模型**:
-  - DB：事实层（版本、关系、Chunk、Embedding）
-  - FS：投影层（人类可读 Markdown，存储于 `/workspace/data/knowledge`）
-  - AI：推理层（由 ave_mujica 负责，mygo 不涉及）
+- **Creator-first**: 一切设计优先服务于我的兴趣、表达和创造欲，而不是迎合固定的网站范式。
+- **Format-agnostic**: 它可以是文章、页面、角色、装置、交互叙事、AI 体验或混合媒介作品。
+- **Imagination-friendly**: 参与开发的 Agent 应主动发挥想象力，与我讨论大胆但合适的想法，不要默认把项目收窄成普通博客或后台系统。
+- **Evolvable**: 网站可以持续变化，不要求所有页面统一成单一结构；允许不同主题、不同媒介形式并存，只要整体体验是有意识设计过的。
+- **前后端分离**: 前端负责体验、视觉、交互和内容呈现；后端保留独立服务与基础设施能力，为未来扩展提供空间。
 
 ## 技术架构与关键目录
 
 ### 数据存储 (Data Storage)
 
-- **路径**: `/workspace/data/knowledge`
-- **用途**: 存储 Markdown 文件及其他数据文件的持久化目录（作为 DB 的文件系统投影）。
+- **当前路径**: `frontend/posts/`
+- **当前用途**: 这是现阶段的一种内容来源，用于存放 Markdown 文章。
+- **设计态度**: 内容载体不受限于文章。未来也可以扩展为交互页面、媒体资源、角色设定、结构化数据、生成内容、实验性素材或其他任意形式的创作资产。
 
 ### 后端服务 (`backend/`)
 
@@ -32,7 +31,6 @@
   - `internal/bootstrap/`: 启动引导（app/http/worker/migrate）
   - `internal/server/`: 全局路由聚合
   - `internal/user/`: User 领域模块
-  - `internal/knowledge/`: Knowledge 领域模块（数据 CRUD + 向量检索）
   - `internal/infra/`: 共享基础设施 (DB, Redis)
 
 #### Clean Architecture 领域模块结构
@@ -84,12 +82,17 @@ interfaces → domain ← application
 
 - **技术栈**: React, TypeScript, Vite, Tailwind CSS
 - **关键目录**:
-  - `src/pages/`: 页面组件
-  - `src/App.tsx`: 应用根组件
+  - `src/pages/`: 页面与独立体验入口
+  - `src/content/`: 当前内容源与内容解析逻辑
+  - `src/layouts/`: 站点级布局组件
+  - `src/styles.css`: 全局视觉语言与页面风格基础
 
 ## 设计决策背景
 
 - **前后端分离**: 允许前端和后端独立开发、部署和扩展
+- **创作驱动**: 项目首先是表达与实验的容器，不要求围绕单一内容模型组织一切页面
+- **形式开放**: 页面可以是阅读型、叙事型、交互型、角色型、视觉型或混合体验
+- **渐进演化**: 允许先从一个具体形态开始，再逐步长成完全不同的东西，不因当前实现限制未来方向
 - **Clean Architecture / DDD-lite**:
   - **领域驱动**: 按业务领域组织代码
   - **依赖倒置**: 领域层定义接口，基础设施层实现
@@ -112,8 +115,6 @@ interfaces → domain ← application
 | [development.md](backend/docs/development.md) | 开发指南、快速开始 |
 | [writing_guide.md](backend/docs/writing_guide.md) | 文档编写规范（**编写文档前必读**） |
 | [naming_convention.md](backend/docs/naming_convention.md) | 文档命名规范 |
-| [knowledge_schema_design.md](backend/docs/knowledge_schema_design.md) | Knowledge 数据库设计 |
-| [knowledge_interface_design.md](backend/docs/knowledge_interface_design.md) | Knowledge 接口设计 |
 
 ### 领域模块文档 (`backend/internal/`)
 
@@ -122,8 +123,6 @@ interfaces → domain ← application
 | 文档 | 说明 |
 | --- | --- |
 | [user/README.md](backend/internal/user/README.md) | User 模块：API、模型、接口 |
-| [knowledge/README.md](backend/internal/knowledge/README.md) | Knowledge 模块：数据 CRUD、向量检索 |
-| [filesystem/README.md](backend/internal/filesystem/README.md) | Filesystem 模块：对象存储式 FS 层设计规范 |
 
 ### 前端文档 (`frontend/`)
 
@@ -137,6 +136,12 @@ interfaces → domain ← application
 - **Docker Compose**:
   - `backend/deployments/compose.yaml`
   - `frontend/compose.yaml`
+
+## 生产环境
+
+- **访问地址**: `http://mygo.chat`
+- **服务状态**: 已部署并运行正常
+- **反向代理**: 使用 Nginx 进行域名访问
 
 ## Agent 行为准则
 
