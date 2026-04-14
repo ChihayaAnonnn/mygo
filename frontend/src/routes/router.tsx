@@ -1,9 +1,10 @@
 import { createBrowserRouter } from "react-router-dom";
 import RootLayout from "../layouts/RootLayout";
 import HomePage from "../pages/HomePage";
+import OpenClawRetiredPage from "../pages/OpenClawRetiredPage";
 import WorkDetailPage from "../pages/WorkDetailPage";
-import OpenClawShowcasePage from "../pages/OpenClawShowcasePage";
 import NotFoundPage from "../pages/NotFoundPage";
+import AgentChatPage from "../pages/AgentChatPage";
 
 export const router = createBrowserRouter([
   {
@@ -11,10 +12,11 @@ export const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { index: true, element: <HomePage /> },
+      { path: "openclaw", element: <OpenClawRetiredPage /> },
       { path: "works/:slug", element: <WorkDetailPage /> },
-      { path: "openclaw", element: <OpenClawShowcasePage /> },
     ],
   },
+  { path: "agent-chat", element: <AgentChatPage /> },
   { path: "*", element: <NotFoundPage /> },
 ]);
 

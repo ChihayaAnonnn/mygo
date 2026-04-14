@@ -1,27 +1,31 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
-const works = [
+interface WorkItem {
+  slug: string;
+  title: string;
+  status: string;
+  summary: string;
+  cta: string;
+  href?: string;
+}
+
+const works: WorkItem[] = [
   {
-    title: "OpenClaw Showcase",
+    slug: "agent-chat",
+    title: "Dual LLM Agent Chat",
     status: "Live",
-    summary: "OpenClaw 数字伙伴的实时展示与交互入口，包含状态、动作和信息面板。",
+    summary: "Dual LLM Agent Chat 交互界面，包含聊天、背景 Agent 日志与 Workspace 文件浏览。",
+    cta: "Open chat",
+    href: "/agent-chat",
+  },
+  {
+    slug: "openclaw-archived",
+    title: "OpenClaw Interactive",
+    status: "Archived",
+    summary: "保留交互界面预览。由于出现安全问题，该页面已停止对外提供实际访问能力。",
+    cta: "View notice",
     href: "/openclaw",
-    cta: "Open showcase",
-  },
-  {
-    slug: "signal-garden",
-    title: "Signal Garden",
-    status: "Planned",
-    summary: "一个偏视觉叙事的实验入口，未来会放入动态场景、角色化信息与多媒体片段。",
-    cta: "Open entry",
-  },
-  {
-    slug: "companion-protocol",
-    title: "Companion Protocol",
-    status: "Prototype",
-    summary: "一个为数字角色、陪伴感界面和 AI 交互预留的作品入口。",
-    cta: "Open entry",
   }
 ];
 
